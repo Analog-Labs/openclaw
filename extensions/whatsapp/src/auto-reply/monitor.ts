@@ -180,7 +180,7 @@ export async function monitorWebChannel(
   };
   process.once("SIGINT", handleSigint);
 
-  const messageTimeoutMs = tuning.messageTimeoutMs ?? 30 * 60 * 1000;
+  const messageTimeoutMs = tuning.messageTimeoutMs ?? 6 * 60 * 60 * 1000;
   const watchdogCheckMs = tuning.watchdogCheckMs ?? 60 * 1000;
   const controller = new WhatsAppConnectionController({
     accountId: account.accountId,

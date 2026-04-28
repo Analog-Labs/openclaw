@@ -51,6 +51,7 @@ const BACKOFF_MS: readonly number[] = [
 ];
 
 const PERMANENT_ERROR_PATTERNS: readonly RegExp[] = [
+  /connection closed/i,
   /no conversation reference found/i,
   /chat not found/i,
   /user not found/i,
@@ -351,6 +352,11 @@ export async function recoverPendingDeliveries(opts: {
   /** Maximum wall-clock time for recovery in ms. Remaining entries are deferred to next startup. Default: 60 000. */
   maxRecoveryMs?: number;
 }): Promise<RecoverySummary> {
+  // Wait for channel providers (e.g. Baileys) to finish startup before
+  // re-delivering queued messages. Without this delay the socket may not
+  // be ready, causing false "Connection Closed" failures.
+  await new Promise((r) => setTimeout(r, 5000));
+
   const pending = await loadPendingDeliveries(opts.stateDir);
   if (pending.length === 0) {
     return createEmptyRecoverySummary();

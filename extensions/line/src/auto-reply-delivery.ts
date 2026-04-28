@@ -132,7 +132,16 @@ export async function deliverLineAutoReply(params: {
   const mediaMessages = mediaUrls
     .map((url) => url?.trim())
     .filter((url): url is string => Boolean(url))
-    .map((url) => deps.createImageMessage(url));
+    .map((url) => {
+      const lower = url.toLowerCase();
+      if (/\.(mp3|m4a|ogg|wav|aac|opus|amr)$/i.test(lower)) {
+        return deps.createAudioMessage(url, 60000);
+      }
+      if (/\.(mp4|mov|avi|3gp)$/i.test(lower)) {
+        return deps.createVideoMessage(url, url);
+      }
+      return deps.createImageMessage(url);
+    });
 
   if (chunks.length > 0) {
     const hasRichOrMedia = richMessages.length > 0 || mediaMessages.length > 0;

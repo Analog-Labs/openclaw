@@ -287,6 +287,40 @@ export async function dispatchReplyFromConfig(
   params: DispatchFromConfigParams,
 ): Promise<DispatchFromConfigResult> {
   const { ctx, cfg, dispatcher } = params;
+
+  // Resolve identity links for third-party plugins (sendblue, whatsapp-cloud, etc.)
+  // that build session keys with hardcoded channel prefixes, bypassing identityLinks.
+  if (ctx.SessionKey && cfg.session?.identityLinks && cfg.session?.dmScope === "per-peer") {
+    const sk = ctx.SessionKey;
+    const m = sk.match(
+      /^(agent:[^:]+):(?:sendblue|whatsapp-cloud|whatsapp|telegram|slack|line)[^:]*:(?:[^:]+:)?direct:(.+)$/i,
+    );
+    if (m) {
+      const agentPrefix = m[1];
+      const rawPeer = m[2].trim();
+      const il = cfg.session.identityLinks;
+      for (const [canonical, ids] of Object.entries(il)) {
+        if (!Array.isArray(ids)) continue;
+        for (const id of ids) {
+          const n = id.trim().toLowerCase();
+          const rn = rawPeer.toLowerCase();
+          const rnNoPlus = rn.replace(/^\+/, "");
+          if (
+            n.endsWith(":" + rn) ||
+            n.endsWith(":" + rnNoPlus) ||
+            n.endsWith(":+" + rnNoPlus) ||
+            n === rn ||
+            n === rnNoPlus
+          ) {
+            ctx.SessionKey = `${agentPrefix}:direct:${canonical.toLowerCase()}`;
+            break;
+          }
+        }
+        if (ctx.SessionKey !== sk) break;
+      }
+    }
+  }
+
   const diagnosticsEnabled = isDiagnosticsEnabled(cfg);
   const channel = normalizeLowercaseStringOrEmpty(ctx.Surface ?? ctx.Provider ?? "unknown");
   const chatId = ctx.To ?? ctx.From;

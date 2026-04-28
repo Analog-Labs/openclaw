@@ -104,11 +104,12 @@ export function resolveOutboundMediaUrls(payload: {
   mediaUrls?: string[];
   mediaUrl?: string;
 }): string[] {
+  const weatherIconPattern = /cdn\.weatherapi\.com\/weather|maps\.gstatic\.com\/weather/i;
   if (payload.mediaUrls?.length) {
-    return payload.mediaUrls;
+    return payload.mediaUrls.filter((u) => !weatherIconPattern.test(u));
   }
   if (payload.mediaUrl) {
-    return [payload.mediaUrl];
+    return weatherIconPattern.test(payload.mediaUrl) ? [] : [payload.mediaUrl];
   }
   return [];
 }

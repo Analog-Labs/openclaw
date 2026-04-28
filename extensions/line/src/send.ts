@@ -251,7 +251,15 @@ export async function sendMessageLine(
   const mediaUrl = opts.mediaUrl?.trim();
   if (mediaUrl) {
     await validateLineMediaUrl(mediaUrl);
-    switch (opts.mediaKind) {
+    // Auto-detect media kind from URL extension when not explicitly set.
+    const resolvedMediaKind =
+      opts.mediaKind ??
+      (/\.(mp3|m4a|aac|wav|ogg|oga|opus)$/i.test(mediaUrl)
+        ? "audio"
+        : /\.(mp4|mov|m4v|webm)$/i.test(mediaUrl)
+          ? "video"
+          : undefined);
+    switch (resolvedMediaKind) {
       case "video": {
         const previewImageUrl = opts.previewImageUrl?.trim();
         if (!previewImageUrl) {

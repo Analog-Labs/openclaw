@@ -744,6 +744,13 @@ export async function deliverReplies(params: {
       : reply?.mediaUrl
         ? [reply.mediaUrl]
         : [];
+    // Filter standalone weather icon URLs that should not be sent as media.
+    const weatherIconPattern = /cdn\.weatherapi\.com\/weather|maps\.gstatic\.com\/weather/i;
+    for (let i = mediaList.length - 1; i >= 0; i--) {
+      if (weatherIconPattern.test(mediaList[i])) {
+        mediaList.splice(i, 1);
+      }
+    }
     const hasMedia = mediaList.length > 0;
     if (!reply?.text && !hasMedia) {
       if (reply?.audioAsVoice) {

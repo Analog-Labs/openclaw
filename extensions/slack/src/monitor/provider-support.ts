@@ -173,6 +173,7 @@ export function createSlackBoltApp(params: {
       ? new params.interop.SocketModeReceiver({
           appToken: params.appToken ?? "",
           autoReconnectEnabled: false,
+          clientPingTimeout: 30_000,
           installerOptions: {
             clientOptions: params.clientOptions,
           },
