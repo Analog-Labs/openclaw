@@ -1,19 +1,51 @@
 # Dockerfile.production — Pocodot production gateway image
-# Uses npm registry install (not source build) for a small, reliable image.
+# Multi-stage: builds from patched source (pocodot branch), then creates a
+# lean alpine runtime image.  Includes all Pocodot plugins baked in.
 # Built by: .github/workflows/deploy-openclaw-production.yml
-#
-# Build args:
-#   OPENCLAW_VERSION  — npm version to install (default: from package.json)
-#   OPENCLAW_DOCKER_APT_PACKAGES — extra apk packages (e.g. "python3 git")
 
+# ── Stage 1: Build from patched source ──────────────────────────
+FROM node:22-bookworm AS build
+
+RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
+
+WORKDIR /app
+
+# Copy manifests first for layer caching
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc openclaw.mjs ./
+COPY ui/package.json ./ui/
+COPY patches ./patches
+COPY scripts/postinstall-bundled-plugins.mjs \
+     scripts/preinstall-package-manager-warning.mjs \
+     scripts/npm-runner.mjs \
+     scripts/windows-cmd-helpers.mjs \
+     ./scripts/
+
+RUN NODE_OPTIONS=--max-old-space-size=2048 pnpm install --frozen-lockfile
+
+# Copy full source (after install to leverage cache)
+COPY . .
+
+# Stub A2UI canvas bundle (requires Bun; not needed for gateway)
+RUN mkdir -p src/canvas-host/a2ui && \
+    echo "/* A2UI stub */" > src/canvas-host/a2ui/a2ui.bundle.js && \
+    echo "stub" > src/canvas-host/a2ui/.bundle.hash && \
+    rm -rf vendor/a2ui apps/shared/OpenClawKit/Tools/CanvasA2UI
+
+# Build gateway (tsdown + postbuild steps)
+RUN pnpm build:docker
+
+# Pack into installable tarball
+RUN npm pack && mv openclaw-*.tgz /tmp/openclaw-patched.tgz
+
+# ── Stage 2: Lean runtime ───────────────────────────────────────
 ARG NODE_VERSION=22
 FROM node:${NODE_VERSION}-alpine
 
-ARG OPENCLAW_VERSION=2026.4.22
 ARG OPENCLAW_DOCKER_APT_PACKAGES="git"
 
-# Install openclaw from npm registry
-RUN npm install -g openclaw@${OPENCLAW_VERSION}
+# Install patched openclaw from build stage
+COPY --from=build /tmp/openclaw-patched.tgz /tmp/
+RUN npm install -g /tmp/openclaw-patched.tgz && rm /tmp/openclaw-patched.tgz
 
 # Install extra packages (git needed for workspace operations)
 RUN if [ -n "$OPENCLAW_DOCKER_APT_PACKAGES" ]; then \
