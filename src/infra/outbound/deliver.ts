@@ -1,5 +1,6 @@
 import { resolveChunkMode, resolveTextChunkLimit } from "../../auto-reply/chunk.js";
 import type { ReplyPayload } from "../../auto-reply/types.js";
+import { applyContentGate } from "./content-gate.js";
 import { loadChannelOutboundAdapter } from "../../channels/plugins/outbound/load.js";
 import type {
   ChannelOutboundAdapter,
@@ -1030,6 +1031,10 @@ async function deliverOutboundPayloadsCore(
         threadId: params.threadId,
       });
       if (hookResult.cancelled) {
+        continue;
+      }
+      // Pre-send content gate: block or sanitize outbound text before delivery
+      if (applyContentGate(hookResult.payload)) {
         continue;
       }
       const renderedPayload = await renderPresentationForDelivery(handler, hookResult.payload);
