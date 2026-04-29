@@ -1,0 +1,10 @@
+{
+  "id": "billing-usage-tracker",
+  "kind": "other",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {},
+    "required": []
+  }
+}

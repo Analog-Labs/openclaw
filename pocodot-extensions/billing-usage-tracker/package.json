@@ -1,0 +1,9 @@
+{
+  "name": "billing-usage-tracker",
+  "version": "1.0.0",
+  "description": "Captures LLM token usage from llm_output hook and stores it for the billing relay",
+  "openclaw": {
+    "extensions": ["./index.js"]
+  },
+  "main": "./index.js"
+}

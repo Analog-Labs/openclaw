@@ -1,0 +1,58 @@
+{
+  "name": "openclaw-sendblue",
+  "version": "1.0.0",
+  "description": "Sendblue (iMessage/SMS/RCS) channel plugin for OpenClaw",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "openclaw.plugin.json"
+  ],
+  "openclaw": {
+    "extensions": [
+      "./src/index.ts"
+    ],
+    "channel": {
+      "id": "sendblue",
+      "label": "Sendblue (iMessage/SMS/RCS)",
+      "selectionLabel": "Sendblue (iMessage / SMS / RCS)",
+      "docsPath": "/channels/sendblue",
+      "docsLabel": "sendblue",
+      "blurb": "iMessage, SMS and RCS via Sendblue's cloud API.",
+      "order": 25,
+      "aliases": [
+        "imessage-cloud",
+        "sendblue-imessage"
+      ]
+    },
+    "install": {
+      "npmSpec": "openclaw-sendblue",
+      "localPath": "extensions/sendblue",
+      "defaultChoice": "npm"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "openclaw",
+    "sendblue",
+    "imessage",
+    "sms",
+    "rcs",
+    "channel",
+    "plugin",
+    "chatbot"
+  ],
+  "author": "OpenClaw",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  }
+}

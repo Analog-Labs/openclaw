@@ -1,0 +1,89 @@
+{
+  "id": "openclaw-sendblue",
+  "channels": ["sendblue"],
+  "name": "Sendblue",
+  "version": "1.0.0",
+  "description": "Sendblue iMessage/SMS/RCS channel plugin for OpenClaw. Supports multiple accounts sharing a single webhook endpoint.",
+  "author": "OpenClaw",
+  "license": "MIT",
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "enabled": {
+        "type": "boolean",
+        "default": true
+      },
+      "webhookPort": {
+        "type": "number",
+        "description": "Port for the webhook HTTP server (shared across accounts)",
+        "default": 3008
+      },
+      "webhookPath": {
+        "type": "string",
+        "description": "URL path for the webhook endpoint (shared across accounts)",
+        "default": "/hooks/sendblue"
+      },
+      "webhookSecret": {
+        "type": "string",
+        "description": "The Sb-Signing-Secret value Sendblue sends with every webhook request"
+      },
+      "accounts": {
+        "type": "object",
+        "description": "Named accounts, each with its own Sendblue credentials and policy",
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "apiKeyId": { "type": "string", "description": "Sendblue API key ID (sb-api-key-id)" },
+            "apiSecretKey": { "type": "string", "description": "Sendblue API secret key (sb-api-secret-key)" },
+            "fromNumber": { "type": "string", "description": "Your Sendblue line number in E.164 format (e.g. +19293649402)" },
+            "dmPolicy": { "type": "string", "enum": ["open", "allowlist"], "default": "open", "description": "Access control: open (anyone) or allowlist (only allowFrom numbers)" },
+            "allowFrom": { "type": "array", "items": { "type": "string" }, "default": [], "description": "E.164 phone numbers allowed to message the bot (when dmPolicy=allowlist)" },
+            "sendReadReceipts": { "type": "boolean", "default": true, "description": "Automatically mark incoming messages as read" }
+          }
+        }
+      },
+      "apiKeyId": {
+        "type": "string",
+        "description": "(Legacy) Sendblue API key ID — use accounts.{name}.apiKeyId instead"
+      },
+      "apiSecretKey": {
+        "type": "string",
+        "description": "(Legacy) Sendblue API secret key — use accounts.{name}.apiSecretKey instead"
+      },
+      "fromNumber": {
+        "type": "string",
+        "description": "(Legacy) Your Sendblue line number — use accounts.{name}.fromNumber instead"
+      },
+      "dmPolicy": {
+        "type": "string",
+        "enum": ["open", "allowlist"],
+        "default": "open",
+        "description": "(Legacy) Access control — use accounts.{name}.dmPolicy instead"
+      },
+      "allowFrom": {
+        "type": "array",
+        "items": { "type": "string" },
+        "default": [],
+        "description": "(Legacy) Allowed numbers — use accounts.{name}.allowFrom instead"
+      },
+      "sendReadReceipts": {
+        "type": "boolean",
+        "default": true,
+        "description": "(Legacy) Send read receipts — use accounts.{name}.sendReadReceipts instead"
+      }
+    },
+    "required": []
+  },
+  "uiHints": {
+    "apiKeyId": { "label": "API Key ID", "sensitive": true },
+    "apiSecretKey": { "label": "API Secret Key", "sensitive": true },
+    "fromNumber": { "label": "From Number (E.164)", "placeholder": "+19293649402" },
+    "webhookPort": { "label": "Webhook Port", "placeholder": "3008" },
+    "webhookPath": { "label": "Webhook Path", "placeholder": "/hooks/sendblue" },
+    "webhookSecret": { "label": "Webhook Secret (Sb-Signing-Secret)", "sensitive": true },
+    "dmPolicy": { "label": "DM Policy" },
+    "allowFrom": { "label": "Allowed Numbers" },
+    "sendReadReceipts": { "label": "Send Read Receipts" }
+  }
+}

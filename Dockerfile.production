@@ -20,14 +20,32 @@ RUN if [ -n "$OPENCLAW_DOCKER_APT_PACKAGES" ]; then \
       apk add --no-cache $OPENCLAW_DOCKER_APT_PACKAGES; \
     fi
 
-# Create home directory for openclaw user
-RUN mkdir -p /home/openclaw && chown node:node /home/openclaw
+# Install npm plugins from registry
+RUN npm install -g openclaw-whatsapp-cloud-api@1.1.0 \
+    @martian-engineering/lossless-claw@0.9.2
+
+# Create home directory and extensions directory for openclaw user
+RUN mkdir -p /home/openclaw/extensions/node_modules && chown -R node:node /home/openclaw
+
+# Copy custom plugins (source only, no node_modules)
+COPY --chown=node:node pocodot-extensions/openclaw-sendblue /home/openclaw/extensions/node_modules/openclaw-sendblue
+COPY --chown=node:node pocodot-extensions/billing-usage-tracker /home/openclaw/.openclaw/extensions/billing-usage-tracker
+
+# Install sendblue dependencies
+RUN cd /home/openclaw/extensions/node_modules/openclaw-sendblue && npm install --omit=dev
 
 # Symlinks so extensions can resolve the openclaw package
 RUN mkdir -p /usr/lib/node_modules \
     && ln -s /usr/local/lib/node_modules/openclaw /usr/lib/node_modules/openclaw
 RUN mkdir -p /node_modules \
     && ln -s /usr/local/lib/node_modules/openclaw /node_modules/openclaw
+
+# Symlink npm plugins into extensions path
+RUN ln -s /usr/local/lib/node_modules/openclaw-whatsapp-cloud-api \
+      /home/openclaw/extensions/node_modules/openclaw-whatsapp-cloud-api \
+    && mkdir -p /home/openclaw/.openclaw/extensions \
+    && ln -s /usr/local/lib/node_modules/@martian-engineering/lossless-claw \
+      /home/openclaw/.openclaw/extensions/lossless-claw
 
 ENV NODE_PATH=/usr/local/lib/node_modules
 ENV HOME=/home/openclaw
