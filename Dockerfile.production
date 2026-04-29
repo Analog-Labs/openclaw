@@ -1,0 +1,43 @@
+# Dockerfile.production — Pocodot production gateway image
+# Uses npm registry install (not source build) for a small, reliable image.
+# Built by: .github/workflows/deploy-openclaw-production.yml
+#
+# Build args:
+#   OPENCLAW_VERSION  — npm version to install (default: from package.json)
+#   OPENCLAW_DOCKER_APT_PACKAGES — extra apk packages (e.g. "python3 git")
+
+ARG NODE_VERSION=22
+FROM node:${NODE_VERSION}-alpine
+
+ARG OPENCLAW_VERSION=2026.4.22
+ARG OPENCLAW_DOCKER_APT_PACKAGES="git"
+
+# Install openclaw from npm registry
+RUN npm install -g openclaw@${OPENCLAW_VERSION}
+
+# Install extra packages (git needed for workspace operations)
+RUN if [ -n "$OPENCLAW_DOCKER_APT_PACKAGES" ]; then \
+      apk add --no-cache $OPENCLAW_DOCKER_APT_PACKAGES; \
+    fi
+
+# Create home directory for openclaw user
+RUN mkdir -p /home/openclaw && chown node:node /home/openclaw
+
+# Symlinks so extensions can resolve the openclaw package
+RUN mkdir -p /usr/lib/node_modules \
+    && ln -s /usr/local/lib/node_modules/openclaw /usr/lib/node_modules/openclaw
+RUN mkdir -p /node_modules \
+    && ln -s /usr/local/lib/node_modules/openclaw /node_modules/openclaw
+
+ENV NODE_PATH=/usr/local/lib/node_modules
+ENV HOME=/home/openclaw
+
+USER node
+WORKDIR /home/openclaw
+
+EXPOSE 18789
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:18789/health || exit 1
+
+CMD ["openclaw", "gateway", "--port", "18789", "--allow-unconfigured"]
