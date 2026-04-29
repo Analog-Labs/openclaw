@@ -175,6 +175,11 @@ COPY --from=runtime-assets --chown=node:node /app/skills ./skills
 COPY --from=runtime-assets --chown=node:node /app/docs ./docs
 COPY --from=runtime-assets --chown=node:node /app/qa ./qa
 
+# Allow bundled extensions to resolve "openclaw/plugin-sdk/*" imports.
+# The openclaw package root is /app itself; symlink it into node_modules
+# so Node.js standard module resolution finds the package exports.
+RUN ln -s /app /app/node_modules/openclaw
+
 # Keep pnpm available in the runtime image for container-local workflows.
 # Use a shared Corepack home so the non-root `node` user does not need a
 # first-run network fetch when invoking pnpm.
